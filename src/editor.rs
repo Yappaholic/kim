@@ -16,7 +16,7 @@ pub struct Editor {
 impl Editor {
     /// # Panics
     /// On init and deinit
-    pub fn run(&mut self, path: Option<&str>) -> Result<(), Error> {
+    pub fn run(&mut self, path: Option<String>) -> Result<(), Error> {
         self.view.buffer.load(path)?;
         self.initialize()?;
         self.repl()?;
@@ -45,22 +45,22 @@ impl Editor {
         match direction {
             MoveDirection::Left => {
                 if cursor.x > 0 {
-                    self.view.cursor.x -= 1
+                    self.view.cursor.x -= 1;
                 }
             }
             MoveDirection::Right => {
                 if cursor.x < self.view.term_size.cols - 1 {
-                    self.view.cursor.x += 1
+                    self.view.cursor.x += 1;
                 }
             }
             MoveDirection::Up => {
                 if cursor.y > 0 {
-                    self.view.cursor.y -= 1
+                    self.view.cursor.y -= 1;
                 }
             }
             MoveDirection::Down => {
                 if cursor.y < self.view.term_size.rows - 1 {
-                    self.view.cursor.y += 1
+                    self.view.cursor.y += 1;
                 }
             }
             MoveDirection::LineEnd => self.view.cursor.x = self.view.term_size.cols - 1,

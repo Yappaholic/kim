@@ -5,7 +5,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn load(&mut self, path: Option<&str>) -> Result<(), Error> {
+    pub fn load(&mut self, path: Option<String>) -> Result<(), Error> {
         self.text = Vec::new();
         if let Some(p) = path {
             let text = std::fs::read_to_string(p)?;

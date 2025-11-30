@@ -5,6 +5,7 @@ pub struct TermSize {
     pub rows: u16,
 }
 
+#[derive(Clone, Copy)]
 pub enum MoveDirection {
     Left,
     Right,
