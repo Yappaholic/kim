@@ -8,7 +8,10 @@ impl Buffer {
   pub fn load(&mut self, path: Option<String>) -> Result<(), Error> {
     self.text = Vec::new();
     if let Some(p) = path {
-      let text = std::fs::read_to_string(p)?;
+      let text = match std::fs::read_to_string(p) {
+        Ok(str) => str,
+        Err(_) => String::from("\r"),
+      };
       for line in text.lines() {
         self.text.push(line.to_owned());
       }
