@@ -1,10 +1,12 @@
 #![warn(clippy::pedantic, clippy::all)]
 use super::{terminal::*, view::*};
 use crossterm::cursor::{Hide, MoveTo, Show};
-use crossterm::event::{Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read};
+use crossterm::event::{
+  Event, Event::Key, Event::Resize, KeyCode::Char, KeyEvent, KeyModifiers, read,
+};
 use crossterm::queue;
 use crossterm::style::Print;
-use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::io::{Error, Write, stdout};
 
 #[derive(Default)]
@@ -17,6 +19,7 @@ impl Editor {
   /// # Panics
   /// On init and deinit
   pub fn run(&mut self, path: Option<String>) -> Result<(), Error> {
+    self.view.needs_redraw = true;
     self.view.buffer.load(path)?;
     self.initialize()?;
     self.repl()?;
@@ -104,14 +107,22 @@ impl Editor {
       if self.should_quit {
         break;
       }
+      if self.view.needs_redraw {
+        self.view.render()?;
+      }
       let event = read()?;
-      self.evaluate_event(&event);
+      self.evaluate_event(&event)?;
       self.refresh_screen()?;
     }
     Ok(())
   }
 
-  fn evaluate_event(&mut self, event: &Event) {
+  fn evaluate_event(&mut self, event: &Event) -> Result<(), Error> {
+    if let Resize(cols, rows) = event {
+      self.view.term_size.cols = *cols;
+      self.view.term_size.rows = *rows;
+      self.view.needs_redraw = true;
+    }
     if let Key(KeyEvent {
       code, modifiers, ..
     }) = event
@@ -120,18 +131,20 @@ impl Editor {
         Char('q') if *modifiers == KeyModifiers::CONTROL => {
           self.should_quit = true;
         }
-        Char('h') => self.move_direction(MoveDirection::Left).unwrap(),
-        Char('l') => self.move_direction(MoveDirection::Right).unwrap(),
-        Char('k') => self.move_direction(MoveDirection::Up).unwrap(),
-        Char('j') => self.move_direction(MoveDirection::Down).unwrap(),
-        Char('$') => self.move_direction(MoveDirection::LineEnd).unwrap(),
-        Char('0') => self.move_direction(MoveDirection::LineStart).unwrap(),
-        Char('G') => self.move_direction(MoveDirection::FileEnd).unwrap(),
-        Char('K') => self.move_direction(MoveDirection::FileStart).unwrap(),
+        Char('h') => self.move_direction(MoveDirection::Left)?,
+        Char('l') => self.move_direction(MoveDirection::Right)?,
+        Char('k') => self.move_direction(MoveDirection::Up)?,
+        Char('j') => self.move_direction(MoveDirection::Down)?,
+        Char('$') => self.move_direction(MoveDirection::LineEnd)?,
+        Char('0') => self.move_direction(MoveDirection::LineStart)?,
+        Char('G') => self.move_direction(MoveDirection::FileEnd)?,
+        Char('K') => self.move_direction(MoveDirection::FileStart)?,
         _ => {}
       }
     }
+    Ok(())
   }
+
   fn refresh_screen(&mut self) -> Result<(), Error> {
     let mut stdout = stdout();
     queue!(stdout, Hide)?;
