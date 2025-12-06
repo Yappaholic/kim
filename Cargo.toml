@@ -3,6 +3,10 @@ name = "kim"
 version = "0.1.0"
 edition = "2024"
 
+[build-dependencies]
+cc = "*"
+
 [dependencies]
 clap = {version = "4.5.53", features = ["derive", "default"]}
 crossterm = "0.29.0"
+tree-sitter = "0.25.10"

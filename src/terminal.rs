@@ -1,24 +1,24 @@
 #![warn(clippy::pedantic, clippy::all)]
 #[derive(Default)]
 pub struct TermSize {
-  pub cols: u16,
-  pub rows: u16,
+    pub cols: u16,
+    pub rows: u16,
 }
 
 #[derive(Clone, Copy)]
 pub enum MoveDirection {
-  Left,
-  Right,
-  Down,
-  Up,
-  LineStart,
-  LineEnd,
-  FileEnd,
-  FileStart,
+    Left,
+    Right,
+    Down,
+    Up,
+    LineStart,
+    LineEnd,
+    FileEnd,
+    FileStart,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct Cursor {
-  pub x: u16,
-  pub y: u16,
+    pub x: u16,
+    pub y: u16,
 }
