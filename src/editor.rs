@@ -51,6 +51,9 @@ impl Editor {
 
     fn move_direction(&mut self, direction: MoveDirection) -> Result<(), Error> {
         let cursor = &mut self.view.cursor;
+        if self.view.buffer.text.is_empty() {
+            return Ok(());
+        }
         match direction {
             MoveDirection::Left => {
                 if cursor.x == 0 && self.view.offset.x > 0 {
@@ -79,13 +82,21 @@ impl Editor {
                 }
             }
             MoveDirection::Down => {
-                if cursor.y == self.view.term_size.rows - 1
-                    && self.view.offset.y + 1 < self.view.buffer.text.len() as u16
+                let next_offset = self.view.offset.y + 1;
+                let buffer_len = self.view.buffer.text.len();
+                if cursor.y != self.view.term_size.rows - 1 {
+                    cursor.y += 1;
+                }
+
+                if self.view.term_size.rows - 2
+                    == self.view.buffer.text[next_offset as usize..buffer_len].len() as u16
+                {
+                    self.view.needs_redraw = false;
+                } else if cursor.y == self.view.term_size.rows - 1
+                    && next_offset < buffer_len as u16
                 {
                     self.view.offset.y += 1;
                     self.view.needs_redraw = true;
-                } else {
-                    cursor.y += 1;
                 }
             }
             MoveDirection::LineEnd => cursor.x = self.view.term_size.cols - 1,
