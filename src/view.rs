@@ -33,33 +33,37 @@ impl View {
 
         (self.term_size.cols, self.term_size.rows) = size()?;
 
-        for row in 0..self.term_size.rows {
-            queue!(stdout, MoveTo(0, row))?;
-            queue!(stdout, Print("~"))?;
-        }
-        self.zero_cursor()?;
-        let range = self.buffer.text[self.offset.y as usize..self.buffer.text.len()]
-            .iter()
-            .enumerate();
-        for (idx, entry) in range {
-            let idx = idx as u16;
-            if idx + 1 < self.term_size.rows {
-                if entry.is_empty() {
-                    queue!(stdout, Clear(ClearType::CurrentLine))?;
-                    queue!(stdout, Print("\n"))?;
+        if self.buffer.text.is_empty() {
+            for row in 0..self.term_size.rows {
+                queue!(stdout, MoveTo(0, row))?;
+                queue!(stdout, Print("~"))?;
+            }
+            self.zero_cursor()?;
+        } else {
+            self.zero_cursor()?;
+            let range = self.buffer.text[self.offset.y as usize..self.buffer.text.len()]
+                .iter()
+                .enumerate();
+            for (idx, entry) in range {
+                let idx = idx as u16;
+                if idx + 1 < self.term_size.rows {
+                    if entry.is_empty() {
+                        queue!(stdout, Clear(ClearType::CurrentLine))?;
+                        queue!(stdout, Print("\n"))?;
+                        self.cursor.y += 1;
+                        queue!(stdout, MoveTo(self.cursor.x, self.cursor.y))?;
+                        continue;
+                    } else {
+                        let line = entry.get(self.offset.x as usize..self.term_size.cols as usize);
+                        if let Some(line) = line {
+                            queue!(stdout, Print(line))?;
+                        } else {
+                            queue!(stdout, Print(entry))?;
+                        }
+                    }
                     self.cursor.y += 1;
                     queue!(stdout, MoveTo(self.cursor.x, self.cursor.y))?;
-                    continue;
-                } else {
-                    let line = entry.get(self.offset.x as usize..self.term_size.cols as usize);
-                    if let Some(line) = line {
-                        queue!(stdout, Print(line))?;
-                    } else {
-                        queue!(stdout, Print(entry))?;
-                    }
                 }
-                self.cursor.y += 1;
-                queue!(stdout, MoveTo(self.cursor.x, self.cursor.y))?;
             }
         }
         self.cursor = prev_cursor;
